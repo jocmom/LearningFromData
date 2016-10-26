@@ -3,49 +3,65 @@ import matplotlib.pyplot as plt
 import random
 
 def target(x):
+    """ target function for y """
     return np.sin(np.pi * x)
 
 def bias(g,f):
+    """ calculate bias """
     return (g-f)**2
 
 def var(g_d, g_mean):
+    """ calculate variance """
     return (g_d - g_mean)**2
 
 def linear_regression(X,y):
+    """ do one linear regression step """
     X_dagger = np.linalg.pinv(X)
     return np.dot(X_dagger, y)
 
+def generate_data(N, h):
+    """ generate x vector, X matrix, y vector, and empty w vector """
+    x = np.array([np.linspace(-1,1,N)]).T
+    # x = np.array([np.random.uniform(-1,1,N)]).T
+    y = target(x)
+    X = h(x,N)
+    w = np.ndarray(shape = (X.shape[1],0))
+    return x,X,y,w
+
 if __name__ == "__main__":
-    N = 1000
-    # x = np.random.uniform(-1,1,N)
-    x = np.linspace(-1,1,N)
-    # reshape vector to (N,1) matrix
-    X = x.reshape((-1,1))
-    transform = lambda x,n: np.random.choice(x,n).reshape((-1,1))
-    w = np.ndarray(shape = (1, 0))
-    X = np.vstack([np.ones(N), x]).T
-    transform = lambda x,n: np.vstack([np.ones(n), np.random.choice(x,n)]).T
-    w = np.ndarray(shape = (2, 0))
+    N = 100
     # g = 1.43*x
+
+    # h(x) = b
+    # x,X,y,w = generate_data(N, lambda x,N: np.column_stack([np.ones(N)]))
+
+    # h(x) = a*x
+    x,X,y,w = generate_data(N, lambda x,N: x.reshape((-1,1)) )
+
+    # h(x) = a*x + b
+    # x,X,y,w = generate_data(N, lambda x,N: np.column_stack([np.ones(N), x]))
+
+    # h(x) = a*x^2
+    # x,X,y,w = generate_data(N, lambda x,N: np.column_stack([x**2]))
+
+    # h(x) = a*x^2 + b
+    # x,X,y,w = generate_data(N, lambda x,N: np.column_stack([np.ones(N), x**2]))
+
     f = np.sin(np.pi * x)
 
     for i in range(N):
-        # points = np.array([[x[i]], [x[i+1]]])
-        points = transform(x, 2)
-        # point1 = np.ones(2).reshape((-1,1))
-        # point2 = np.random.choice(x, 2).reshape((-1,1))
-        # points = np.hstack([point1, point2])
-        """ get last column of target """
-        # w.append(linear_regression(points, target(points[:,[-1]])))
-        # print(w)
-        w = np.hstack([w, linear_regression(points, target(points[:,[-1]]))])
+        rnd_idx = np.random.randint(N,size=2)
+        x_points = X[rnd_idx]
+        y_points = y[rnd_idx]
+        # get last column of target
+        w = np.hstack([w, linear_regression(x_points, y_points)])
 
-    # print(w)
-    # w = np.array(w)
-    # print(w.T)
-    a_mean = np.mean(w)
-    g_mean = a_mean*x
+    # mean of each column
+    a_mean = np.mean(w, axis=1,keepdims=True)
+    # g_mean = a_mean*x
+    g_mean = np.dot(X,a_mean)
     print("a_mean: ", a_mean)
+    print(a_mean.shape, w.shape, g_mean.shape)
 
     b = bias(g_mean,f)
     print("bias: ", np.mean(b))
@@ -53,17 +69,20 @@ if __name__ == "__main__":
     variance = []
     hyp_set = np.dot(X, w)
     for h in hyp_set.T:
-        variance.append(np.mean(var(h,g_mean)))
+        variance.append(np.mean(var(h,g_mean.T)))
     variance = np.mean(variance)
     print("var: ", variance)
 
-
+    # do the plots
     for h in hyp_set.T:
         plt.plot(x,h,color='grey', alpha=0.1)
     plt.plot(x,b,color='pink',label="bias")
     plt.scatter(x,f,color='red',label="target")
     plt.scatter(x,g_mean,label="g_mean")
     plt.legend()
+    plt.grid()
+    plt.xlim((-1,1))
+    plt.ylim((-1,1))
     plt.show()
 
 
